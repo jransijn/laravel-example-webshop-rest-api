@@ -19,4 +19,9 @@ class OrderLine extends Model
         'barcode',
         'quantity',
     ];
+
+    public static function find_by_order_id_and_barcode($order_id, $barcode)
+    {
+        return OrderLine::where([ 'order_id' => $order_id, 'barcode' => $barcode ])->first();
+    }
 }

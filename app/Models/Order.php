@@ -19,4 +19,17 @@ class Order extends Model
         'total_amount',
         'status',
     ];
+
+    public static function find_from_order_number($order_number): mixed
+    {
+        return Order::where('number', $order_number)->first();
+    }
+    public static function find_id_from_order_number($order_number): ?int
+    {
+        $order = Self::select('id')->where('number', $order_number)->first();
+        if (is_null($order))
+            return NULL;
+        return $order->id;
+    }
+
 }

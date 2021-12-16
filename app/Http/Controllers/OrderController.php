@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -11,39 +12,51 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        $orders = Order::get();
-        return response()->json([ 'status' => 'success', 'data' => $orders ]);
+        $start = $request->input('start', 0);
+        $limit = $request->input('limit', 100);
+        $orders = Order::get()->skip($start)->take($limit);
+        if (is_null($orders))
+            return response()->json([ 'status' => 'failure', 'data' => array(), 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
+        return response()->json([ 'status' => 'success', 'data' => $orders->values() ]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param string  $order_number
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, string $order_number): JsonResponse
     {
+        $order_id = Order::find_id_from_order_number($order_number);
+        if (!is_null($order_id))
+            return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_ALREADY_EXISTS' ], 409);
         $order = new Order;
-        $order->number = $request->input('number');
+        $order->number = $order_number;
         $order->total_amount = $request->input('total_amount');
         $order->status = $request->input('status');
         $order->save();
-        return response()->json([ 'status' => 'success' ]);
+        return response()->json([ 'status' => 'success' ], 201);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $order_number
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function show($id)
+    public function show(Request $request, string $order_number): JsonResponse
     {
-        $order = Order::find($id);
+        $order = Order::find_from_order_number($order_number);
+        if (is_null($order))
+            return response()->json([ 'status' => 'failure', 'data' => null, 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
         return response()->json([ 'status' => 'success', 'data' => $order ]);
     }
 
@@ -51,12 +64,14 @@ class OrderController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  int  $order_number
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $order_number): JsonResponse
     {
-        $order = Order::find($id);
+        $order = Order::find_from_order_number($order_number);
+        if (is_null($order))
+            return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
         $order->number = $request->input('number');
         $order->total_amount = $request->input('total_amount');
         $order->status = $request->input('status');
@@ -67,12 +82,14 @@ class OrderController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $order_number
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy($id)
+    public function destroy(Request $request, string $order_number): JsonResponse
     {
-        Order::destroy($id);
+        $order_id = Order::find_id_from_order_number($order_number);
+        Order::destroy($order_id);
         return response()->json([ 'status' => 'success' ]);
     }
 }
