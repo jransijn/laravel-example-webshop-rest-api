@@ -19,8 +19,12 @@ class OrderLineController extends Controller
      */
     public function index(Request $request, string $order_number): JsonResponse
     {
-        $start = $request->input('start', 0);
-        $limit = $request->input('limit', 100);
+        $validatedData = $request->validate([
+            'start' => ['integer'],
+            'limit' => ['integer'],
+        ]);
+        $start = $validatedData['start'] ?? 0;
+        $limit = $validatedData['limit'] ?? 15;
         $order_id = Order::find_id_from_order_number($order_number);
         if (is_null($order_id))
             return response()->json([ 'status' => 'failure', 'data' => array(), 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
@@ -39,6 +43,10 @@ class OrderLineController extends Controller
      */
     public function store(Request $request, string $order_number): JsonResponse
     {
+        $validatedData = $request->validate([
+            'barcode' => ['string'],
+            'quantity' => ['integer'],
+        ]);
         $order_id = Order::find_id_from_order_number($order_number);
         if (is_null($order_id))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
@@ -48,8 +56,8 @@ class OrderLineController extends Controller
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_ALREADY_EXISTS' ], 409);
         $order_line = new OrderLine;
         $order_line->order_id = $order_id;
-        $order_line->barcode = $request->input('barcode');
-        $order_line->quantity = $request->input('quantity');
+        $order_line->barcode = $barcode;
+        $order_line->quantity = $validatedData['quantity'];
         $order_line->save();
         return response()->json([ 'status' => 'success' ], 201);
     }
@@ -83,6 +91,10 @@ class OrderLineController extends Controller
      */
     public function update(Request $request, string $order_number, string $barcode): JsonResponse
     {
+        $validatedData = $request->validate([
+            'barcode' => ['string'],
+            'quantity' => ['integer'],
+        ]);
         $order_id = Order::find_id_from_order_number($order_number);
         if (is_null($order_id))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
@@ -90,8 +102,8 @@ class OrderLineController extends Controller
         if (is_null($order_line))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
         $order_line->order_id = $order_id;
-        $order_line->barcode = $request->input('barcode');
-        $order_line->quantity = $request->input('quantity');
+        $order_line->barcode = $validatedData['barcode'];
+        $order_line->quantity = $validatedData['quantity'];
         $order_line->save();
         return response()->json([ 'status' => 'success' ]);
     }

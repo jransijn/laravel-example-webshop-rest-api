@@ -23,9 +23,31 @@ class OrderLineTest extends TestCase
     {
         $this->seed(TestSeeder::class);
 
-        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER)
+        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines')
             ->assertValidRequest()
             ->assertValidResponse(200);
+
+        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines'.'?start=5')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines'.'?limit=5')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines'.'?start=5&limit=5')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        // Test input validation...
+
+        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines'.'?start=5,limit=5')
+            ->assertValidRequest()
+            ->assertValidResponse(422);
+
+        $this->getJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines'.'?start=five&limit=five')
+            ->assertValidRequest()
+            ->assertValidResponse(422);
     }
 
     public function test_get_order()
@@ -47,7 +69,7 @@ class OrderLineTest extends TestCase
             ->assertValidRequest()
             ->assertValidResponse(404);
 
-            $this->getJson('/api/orders/'.$RANDOM_ORDER_NUMBER.'/order_lines/'.$RANDOM_ORDERLINE_BARCODE)
+        $this->getJson('/api/orders/'.$RANDOM_ORDER_NUMBER.'/order_lines/'.$RANDOM_ORDERLINE_BARCODE)
             ->assertValidRequest()
             ->assertValidResponse(404);
     }
@@ -74,6 +96,15 @@ class OrderLineTest extends TestCase
         $this->postJson('/api/orders/'.TestSeeder::ORDER_NUMBER.'/order_lines', array( 'barcode' => TestSeeder::ORDER_LINE_BARCODE_1, 'quantity' => 4 ))
             ->assertValidRequest()
             ->assertValidResponse(409);
+
+        // Test input validation...
+
+        $RANDOM_ORDER_NUMBER = TestSeeder::random_order_number();
+        $RANDOM_ORDERLINE_BARCODE = TestSeeder::random_orderline_barcode();
+
+        $this->postJson('/api/orders/'.$RANDOM_ORDER_NUMBER.'/order_lines', array( 'barcode' => $RANDOM_ORDERLINE_BARCODE, 'quantity' => 4 ))
+            ->assertValidRequest()
+            ->assertValidResponse(404);
     }
 
     public function test_put_order()
@@ -94,6 +125,15 @@ class OrderLineTest extends TestCase
         $this->putJson('/api/orders/'.$RANDOM_ORDER_NUMBER.'/order_lines/'.$RANDOM_ORDERLINE_BARCODE, array( 'barcode' => $RANDOM_ORDERLINE_BARCODE, 'quantity' => 4 ))
             ->assertValidRequest()
             ->assertValidResponse(404);
+
+        // Test input validation...
+
+        $RANDOM_ORDER_NUMBER = TestSeeder::random_order_number();
+        $RANDOM_ORDERLINE_BARCODE = TestSeeder::random_orderline_barcode();
+
+        $this->putJson('/api/orders/'.$RANDOM_ORDER_NUMBER.'/order_lines/'.$RANDOM_ORDERLINE_BARCODE, array( 'barcode' => $RANDOM_ORDERLINE_BARCODE, 'quantity' => 'four' ))
+            ->assertValidRequest()
+            ->assertValidResponse(422);
     }
 
     public function test_delete_order()

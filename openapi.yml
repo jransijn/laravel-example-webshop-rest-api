@@ -84,7 +84,7 @@ paths:
           description: A list of order lines.
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/OkResponse_OrderArray'}
+              schema: {$ref: '#/components/schemas/OkResponse_OrderLineArray'}
         '404':
           description: A failed request.
           content:

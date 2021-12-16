@@ -26,6 +26,32 @@ class OrderTest extends TestCase
         $this->getJson('/api/orders')
             ->assertValidRequest()
             ->assertValidResponse(200);
+
+        $this->getJson('/api/orders')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        $this->getJson('/api/orders'.'?start=5')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        $this->getJson('/api/orders'.'?limit=5')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        $this->getJson('/api/orders'.'?start=5&limit=5')
+            ->assertValidRequest()
+            ->assertValidResponse(200);
+
+        // Test input validation...
+
+        $this->getJson('/api/orders'.'?start=5,limit=5')
+            ->assertValidRequest()
+            ->assertValidResponse(422);
+
+        $this->getJson('/api/orders'.'?start=five&limit=five')
+            ->assertValidRequest()
+            ->assertValidResponse(422);
     }
 
     public function test_get_order()
@@ -60,6 +86,14 @@ class OrderTest extends TestCase
         $this->postJson('/api/orders', array( 'number' => TestSeeder::ORDER_NUMBER, 'total_amount' => 4.3, 'status' => 'pending' ))
             ->assertValidRequest()
             ->assertValidResponse(409);
+
+        // Test input validation...
+
+        $RANDOM_ORDER_NUMBER = TestSeeder::random_order_number();
+
+        $this->postJson('/api/orders', array( 'number' => $RANDOM_ORDER_NUMBER, 'total_amount' => 'four', 'status' => 'foobar' ))
+            ->assertValidRequest()
+            ->assertValidResponse(422);
     }
 
     public function test_put_order()
@@ -75,6 +109,12 @@ class OrderTest extends TestCase
         $this->putJson('/api/orders/'.$RANDOM_ORDER_NUMBER, array( 'number' => $RANDOM_ORDER_NUMBER, 'total_amount' => 4.3, 'status' => 'pending' ))
             ->assertValidRequest()
             ->assertValidResponse(404);
+
+        // Test input validation...
+
+        $this->putJson('/api/orders/'.TestSeeder::ORDER_NUMBER, array( 'number' => TestSeeder::ORDER_NUMBER, 'total_amount' => 'zero', 'status' => 'fizzbuzz' ))
+            ->assertValidRequest()
+            ->assertValidResponse(422);
     }
 
     public function test_delete_order()

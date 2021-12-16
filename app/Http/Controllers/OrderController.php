@@ -17,8 +17,12 @@ class OrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $start = $request->input('start', 0);
-        $limit = $request->input('limit', 100);
+        $validatedData = $request->validate([
+            'start' => ['integer'],
+            'limit' => ['integer'],
+        ]);
+        $start = $validatedData['start'] ?? 0;
+        $limit = $validatedData['limit'] ?? 15;
         $orders = Order::get()->skip($start)->take($limit);
         if (is_null($orders))
             return response()->json([ 'status' => 'failure', 'data' => array(), 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
@@ -33,13 +37,18 @@ class OrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $order_id = Order::find_id_from_order_number($request->input('number'));
+        $validatedData = $request->validate([
+            'number' => ['required', 'string'],
+            'total_amount' => ['required', 'numeric'],
+            'status' => ['required', 'in:pending,paid,shipped'],
+        ]);
+        $order_id = Order::find_id_from_order_number($validatedData['number']);
         if (!is_null($order_id))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_ALREADY_EXISTS' ], 409);
         $order = new Order;
-        $order->number = $request->input('number');
-        $order->total_amount = $request->input('total_amount');
-        $order->status = $request->input('status');
+        $order->number = $validatedData['number'];
+        $order->total_amount = $validatedData['total_amount'];
+        $order->status = $validatedData['status'];
         $order->save();
         return response()->json([ 'status' => 'success' ], 201);
     }
@@ -68,12 +77,17 @@ class OrderController extends Controller
      */
     public function update(Request $request, string $order_number): JsonResponse
     {
+        $validatedData = $request->validate([
+            'number' => ['string'],
+            'total_amount' => ['required', 'numeric'],
+            'status' => ['required', 'in:pending,paid,shipped'],
+        ]);
         $order = Order::find_from_order_number($order_number);
         if (is_null($order))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
-        $order->number = $request->input('number');
-        $order->total_amount = $request->input('total_amount');
-        $order->status = $request->input('status');
+        $order->number = $validatedData['number'];
+        $order->total_amount = $validatedData['total_amount'];
+        $order->status = $validatedData['status'];
         $order->save();
         return response()->json([ 'status' => 'success' ]);
     }
