@@ -1,0 +1,318 @@
+openapi: '3.0.2'
+info:
+  title: Laravel Webshop REST API
+  version: '1.0'
+servers:
+  - url: http://localhost:80/
+paths:
+  /api/orders:
+    get: # also head
+      description: Returns a list of orders.
+      responses:
+        '200':
+          description: A list of orders.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_OrderArray'}
+        '404':
+          description: A failed request.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_ArrayNotFound'}
+    post:
+      description: Creates a new order.
+      responses:
+        '201':
+          description: The order has been successfully created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Empty'}
+        '409':
+          description: The order already exists.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_AlreadyExists'}
+  /api/orders/{order}:
+    parameters:
+      - $ref: '#/components/parameters/OrderNumber'
+    get: # also head
+      description: Returns an order.
+      responses:
+        '200':
+          description: The order.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Order'}
+        '404':
+          description: The order does not exist.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_DataNotFound'}
+    put: # also patch
+      description: Updates an existing order.
+      responses:
+        '200':
+          description: The order has been successfully updated.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Empty'}
+        '404':
+          description: The order does not exist.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_NotFound'}
+    delete:
+      description: Delete an order.
+      responses:
+        '200':
+          description: The order has been successfully deleted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Empty'}
+  /api/orders/{order}/order_lines:
+    parameters:
+      - $ref: '#/components/parameters/OrderNumber'
+    get: # also head
+      description: Returns a list of order lines.
+      responses:
+        '200':
+          description: A list of order lines.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_OrderArray'}
+        '404':
+          description: A failed request.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_ArrayNotFound'}
+    post:
+      description: Creates a new order line.
+      responses:
+        '201':
+          description: The order line has been successfully created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Empty'}
+        '404':
+          description: The order does not exist.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_NotFound'}
+        '409':
+          description: The order line already exists.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_AlreadyExists'}
+  /api/orders/{order}/order_lines/{order_line}:
+    parameters:
+      - $ref: '#/components/parameters/OrderNumber'
+      - $ref: '#/components/parameters/Barcode'
+    get: # also head
+      description: Returns an order line.
+      responses:
+        '200':
+          description: The order line.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_OrderLine'}
+        '404':
+          description: The order line does not exist.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_DataNotFound'}
+    put: # also patch
+      description: Updates an existing order line.
+      responses:
+        '200':
+          description: The order line has been successfully updated.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Empty'}
+        '404':
+          description: The order line does not exist.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FailedResponse_NotFound'}
+    delete:
+      description: Delete an order line.
+      responses:
+        '200':
+          description: The order line has been successfully deleted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OkResponse_Empty'}
+components:
+  parameters:
+    OrderNumber:
+      name: order
+      in: path
+      description: Order number
+      schema:
+        type: string
+      required: true
+    Barcode:
+      name: order_line
+      in: path
+      description: Barcode
+      schema:
+        type: string
+      required: true
+  schemas:
+    GenericResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          enum: [ 'success', 'failure' ]
+        data:
+          nullable: true
+          anyOf:
+            - type: array
+              items:
+                type: object
+            - $ref: '#/components/schemas/Order'
+            - $ref: '#/components/schemas/OrderLine'
+    Order:
+      type: object
+      required:
+        - number
+        - total_amount
+        - status
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+        total_amount:
+          type: number
+        status:
+          enum: [ 'pending', 'paid', 'shipped' ]
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    OrderLine:
+      type: object
+      required:
+        - barcode
+        - quantity
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order_id:
+          type: integer
+          readOnly: true
+        barcode:
+          type: string
+        quantity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    OkResponse_Empty:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          enum: [ 'success' ]
+    OkResponse_Order:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          enum: [ 'success' ]
+        data:
+          $ref: '#/components/schemas/Order'
+    OkResponse_OrderArray:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          enum: [ 'success' ]
+        data:
+          type: array
+          items: {$ref: '#/components/schemas/Order'}
+    OkResponse_OrderLine:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          enum: [ 'success' ]
+        data:
+          $ref: '#/components/schemas/OrderLine'
+    OkResponse_OrderLineArray:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          enum: [ 'success' ]
+        data:
+          type: array
+          items: {$ref: '#/components/schemas/OrderLine'}
+    FailedResponse_AlreadyExists:
+      type: object
+      required:
+        - status
+        - reason
+      properties:
+        status:
+          enum: [ 'failure' ]
+        reason:
+          enum: [ 'RESOURCE_ALREADY_EXISTS' ]
+    FailedResponse_NotFound:
+      type: object
+      required:
+        - status
+        - reason
+      properties:
+        status:
+          enum: [ 'failure' ]
+        reason:
+          enum: [ 'RESOURCE_NOT_FOUND' ]
+    FailedResponse_DataNotFound:
+      type: object
+      required:
+        - status
+        - reason
+        - data
+      properties:
+        status:
+          enum: [ 'failure' ]
+        reason:
+          enum: [ 'RESOURCE_NOT_FOUND' ]
+        data:
+          enum: [ null ]
+    FailedResponse_ArrayNotFound:
+      type: object
+      required:
+        - status
+        - reason
+        - data
+      properties:
+        status:
+          enum: [ 'failure' ]
+        reason:
+          enum: [ 'RESOURCE_NOT_FOUND' ]
+        data:
+          enum: [ [] ]
