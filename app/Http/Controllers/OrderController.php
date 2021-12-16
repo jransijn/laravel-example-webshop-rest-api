@@ -29,16 +29,15 @@ class OrderController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param string  $order_number
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request, string $order_number): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $order_id = Order::find_id_from_order_number($order_number);
+        $order_id = Order::find_id_from_order_number($request->input('number'));
         if (!is_null($order_id))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_ALREADY_EXISTS' ], 409);
         $order = new Order;
-        $order->number = $order_number;
+        $order->number = $request->input('number');
         $order->total_amount = $request->input('total_amount');
         $order->status = $request->input('status');
         $order->save();

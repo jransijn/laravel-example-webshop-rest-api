@@ -24,4 +24,13 @@ class OrderLine extends Model
     {
         return OrderLine::where([ 'order_id' => $order_id, 'barcode' => $barcode ])->first();
     }
+
+    public static function exists(string $order_number, string $barcode): bool
+    {
+        $order_id = Order::find_id_from_order_number($order_number);
+        if (is_null($order_id))
+            return false;
+        $order = OrderLine::find_by_order_id_and_barcode($order_id, $barcode);
+        return !is_null($order);
+    }
 }

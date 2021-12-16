@@ -35,14 +35,14 @@ class OrderLineController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param string  $order_number
-     * @param string  $barcode
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      */
-    public function store(Request $request, string $order_number, string $barcode): JsonResponse
+    public function store(Request $request, string $order_number): JsonResponse
     {
         $order_id = Order::find_id_from_order_number($order_number);
         if (is_null($order_id))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
+        $barcode = $request->input('barcode');
         $order_line = OrderLine::find_by_order_id_and_barcode($order_id, $barcode);
         if (!is_null($order_line))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_ALREADY_EXISTS' ], 409);
@@ -86,7 +86,7 @@ class OrderLineController extends Controller
         $order_id = Order::find_id_from_order_number($order_number);
         if (is_null($order_id))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
-        $order_line = OrderLine::find_by_order_id_and_barcode($order_id, $barcode)->first();
+        $order_line = OrderLine::find_by_order_id_and_barcode($order_id, $barcode);
         if (is_null($order_line))
             return response()->json([ 'status' => 'failure', 'reason' => 'RESOURCE_NOT_FOUND' ], 404);
         $order_line->order_id = $order_id;

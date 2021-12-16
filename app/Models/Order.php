@@ -32,4 +32,10 @@ class Order extends Model
         return $order->id;
     }
 
+    public static function exists(string $order_number): bool
+    {
+        $order_id = Order::find_id_from_order_number($order_number);
+        return !is_null($order_id);
+    }
+
 }

@@ -3,10 +3,10 @@
 namespace Tests\Unit;
 
 use App\Http\Controllers\OrderController;
-use App\Models\Order;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Tests\AssertOrders;
 use Tests\TestCase;
 use Tests\ValidatesJsonResponses;
 
@@ -14,21 +14,7 @@ class OrderControllerTest extends TestCase
 {
     use RefreshDatabase;
     use ValidatesJsonResponses;
-
-    private static function order_exists(string $order_number): bool
-    {
-        $order = Order::find_id_from_order_number($order_number);
-        return !is_null($order);
-    }
-
-    public static function assertThatOrderExists(string $order_number)
-    {
-        static::assertTrue(static::order_exists($order_number));
-    }
-    public static function assertThatOrderDoesNotExists(string $order_number)
-    {
-        static::assertFalse(static::order_exists($order_number));
-    }
+    use AssertOrders;
 
     public static function validate_order(mixed $order)
     {
@@ -139,14 +125,14 @@ class OrderControllerTest extends TestCase
 
         $this->assertThatOrderDoesNotExists($RANDOM_ORDER_NUMBER);
 
-        $request = Request::create('/api/orders/'.$RANDOM_ORDER_NUMBER, 'POST', [ 'number' => $RANDOM_ORDER_NUMBER, 'total_amount' => 42.5, 'status' => 'pending' ]);
+        $request = Request::create('/api/orders', 'POST', [ 'number' => $RANDOM_ORDER_NUMBER, 'total_amount' => 42.5, 'status' => 'pending' ]);
         $controller = new OrderController;
         $response = $controller->store($request, $RANDOM_ORDER_NUMBER);
         $this->validate_response_success($response, false, 201);
 
         $this->assertThatOrderExists($RANDOM_ORDER_NUMBER);
 
-        $request = Request::create('/api/orders/'.$RANDOM_ORDER_NUMBER, 'POST', [ 'number' => $RANDOM_ORDER_NUMBER, 'total_amount' => 42.5, 'status' => 'pending' ]);
+        $request = Request::create('/api/orders', 'POST', [ 'number' => $RANDOM_ORDER_NUMBER, 'total_amount' => 42.5, 'status' => 'pending' ]);
         $controller = new OrderController;
         $response = $controller->store($request, $RANDOM_ORDER_NUMBER);
         $this->validate_response_failure($response, 409);
